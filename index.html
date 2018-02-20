@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Develop and Test AWS Lambdas Locally - Pablo Avila Mesa</title>
+
+  <link rel="stylesheet" href="css/reveal.min.css">
+  <link rel="stylesheet" href="css/theme/black.css">
+
+  <!-- Theme used for syntax highlighting of code -->
+  <link rel="stylesheet" href="lib/css/zenburn.css">
+
+  <!-- Printing and PDF exports -->
+  <script>
+     var link = document.createElement( 'link' );
+     link.rel = 'stylesheet';
+     link.type = 'text/css';
+     link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+     document.getElementsByTagName( 'head' )[0].appendChild( link );
+ </script>
+</head>
+<body>
+  <div class="reveal">
+     <div class="slides">
+        <section data-markdown>
+            <textarea data-template>
+                # Develop and Test Serverless Applications Locally
+                Using SAM
+
+                *Pablo Avila Mesa*
+            </textarea>
+        </section>
+        <section data-markdown>
+            <textarea data-template>
+                ## What is SAM
+
+                > The AWS Serverless Application Model (AWS SAM, previously known as Project Flourish) extends AWS CloudFormation to provide a simplified way of defining the Amazon API Gateway APIs, AWS Lambda functions, and Amazon DynamoDB tables needed by your serverless application.
+
+            </textarea>
+        </section>  
+         <section data-markdown>
+            <textarea data-template>
+                ## Why do I need it?
+
+                You don't really need it, but could be useful.
+
+                Is it an alternative to `Serverless`, `Terraform`, `CloudFormation`?
+
+                ## ?    
+            </textarea>
+        </section>        
+         <section data-markdown>
+            <textarea data-template>
+                ### SAM 
+                ##### vs 
+                #### Serverless - Terraform - CloudFormation
+
+                * Is an extension of Cloud Formation.
+                * Is meant for a limited set of resources and events.
+                * Was created by AWS to simplify the usage of Cloud Formation when developing serverless applications.
+            </textarea>
+        </section>
+        <section data-markdown>
+            <textarea data-template>
+                ## When to use it
+
+                SAM should be used when developing serverless applications consisting of any of these resources:
+
+                * Function (Lambda)
+                * Simple Table (Dynamodb with simple key)
+                * API (Api Gateway)
+
+                *For something else, should be complemented with CloudFormation*
+            </textarea>
+        </section>
+         <section data-markdown>
+            <textarea data-template>
+                ## Documentation
+
+                [https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md)
+            </textarea>
+        </section>
+         <section data-markdown>
+            <textarea data-template>
+                ## What is SAM Local?
+            </textarea>
+        </section>
+         <section data-markdown>
+            <textarea data-template>
+                
+            </textarea>
+        </section>
+         <section data-markdown>
+            <textarea data-template>
+                
+            </textarea>
+        </section>          
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.min.js"></script>
+<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+               { src: 'plugin/markdown/marked.js' },
+               { src: 'plugin/markdown/markdown.js' },
+               { src: 'plugin/zoom-js/zoom.js', async: true },
+               { src: 'plugin/notes/notes.js', async: true },
+               { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+               ]
+           });
+       </script>
+</body>
+</html>
