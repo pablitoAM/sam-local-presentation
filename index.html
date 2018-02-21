@@ -1,120 +1,370 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>Develop and Test AWS Lambdas Locally - Pablo Avila Mesa</title>
+        <link rel="stylesheet" href="css/reveal.min.css">
+        <link rel="stylesheet" href="css/theme/black.css">
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+        <!-- Printing and PDF exports -->
+        <script>
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown>
+                    <textarea data-template>
+                    # Develop and Test Serverless Applications Locally
+                    
+                    Using SAM
+                    
+                    *Pablo Avila Mesa*
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## What is SAM
+                    > The AWS Serverless Application Model (AWS SAM, previously known as Project Flourish) extends AWS CloudFormation to provide a simplified way of defining the Amazon API Gateway APIs, AWS Lambda functions, and Amazon DynamoDB tables needed by your serverless application.
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## Do I need it?
+                    Probably not, but maybe you'd like to see what is:
+                    ### SAM Local
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## SAM Local
+                    Is a CLI which lets doing the following:
+                    * Test Functions Locally
+                    * Start local API Gateway from a SAM Template
+                    * Validate a SAM Template
+                    * Generate sample payloads for various event sources
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## How to use it?
+                    NodeJS `npm install -g aws-sam-local`
 
-  <title>Develop and Test AWS Lambdas Locally - Pablo Avila Mesa</title>
+                    or
 
-  <link rel="stylesheet" href="css/reveal.min.css">
-  <link rel="stylesheet" href="css/theme/black.css">
+                    Binary release (download binary)
 
-  <!-- Theme used for syntax highlighting of code -->
-  <link rel="stylesheet" href="lib/css/zenburn.css">
+                    or
 
-  <!-- Printing and PDF exports -->
-  <script>
-     var link = document.createElement( 'link' );
-     link.rel = 'stylesheet';
-     link.type = 'text/css';
-     link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-     document.getElementsByTagName( 'head' )[0].appendChild( link );
- </script>
-</head>
-<body>
-  <div class="reveal">
-     <div class="slides">
-        <section data-markdown>
-            <textarea data-template>
-                # Develop and Test Serverless Applications Locally
-                Using SAM
+                    Build it from sources (Golang) :)
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## What requires?
+                    *Docker installed locally*
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## Documentation
+                    [https://github.com/awslabs/aws-sam-local#generate-sample-event-source-payloads](https://github.com/awslabs/aws-sam-local#generate-sample-event-source-payloads)
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## Let's see it in practice: Simple serverless application
+                    > API Gateway + Lambda
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    1. Create SAM template
+                    2. Start API Gateway
+                    3. Create Lambda
+                    4. Create Test Event
+                    5. Test it
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    ### 1. Create SAM template
 
-                *Pablo Avila Mesa*
-            </textarea>
-        </section>
-        <section data-markdown>
-            <textarea data-template>
-                ## What is SAM
+                    ```
+                    AWSTemplateFormatVersion: '2010-09-09'
+                    Transform: 'AWS::Serverless-2016-10-31'
+                    Description: API Lambda Demo.
+                    Resources:
+                      apilambdademo:
+                        Type: 'AWS::Serverless::Function'
+                        Properties:
+                          Handler: index.handler
+                          Runtime: nodejs6.10
+                          CodeUri: .
+                          Description: 'A demo lambda'
+                          MemorySize: 128
+                          Timeout: 10
+                          Role: 'arn:aws:iam::293899812389:role/service-role/sam-local-demo'
+                          Events:
+                            GetDemo:
+                              Type: Api
+                              Properties:
+                                Path: /demo
+                                Method: get
+                            PostDemo:
+                              Type: Api
+                              Properties:
+                                Path: /demo
+                                Method: post
+                            PutDemoId:
+                              Type: Api
+                              Properties:
+                                Path: '/demo/{id}'
+                                Method: put
+                            GetDemoId:
+                              Type: Api
+                              Properties:
+                                Path: '/demo/{id}'
+                                Method: get
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    ### 2. Start API Gateway
+                    `sam local start-api -t template.yaml`
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    ### 3. Create Lambda
+                    ```
+                    exports.handler = (event, context, callback) => {
+                        console.log("Received an event!");
+                        console.log("Method: ", event.httpMethod);
+                        console.log("Body: ", event.body);
+                        console.log("Path Parameters: ", event.pathParameters);
+                        let result = {
+                            method: event.httpMethod,
+                            body: event.body,
+                            pathParameters: event.pathParameters
+                        };
+                        callback(null, {
+                            statusCode: 200,
+                            headers: {
+                                "Access-Control-Allow-Origin": "*"
+                            },
+                            body: JSON.stringify(result)
+                        });
+                    };
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    ### 4. Create Test Event
+                    ```
+                    sam local generate-event api > test.json
+                    ```
+                    ```
+                    sam local generate-event api -m "PUT" -r "/{id}" -p "/demo" -b "{ \\\"test\\\": \\\"body\\\" }" > test.json
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## API Gateway + Lambda
+                    ### 5. Test Lambda with Event
+                    ```
+                    sam local invoke samlocaldemo -e test.json
+                    ```
 
-                > The AWS Serverless Application Model (AWS SAM, previously known as Project Flourish) extends AWS CloudFormation to provide a simplified way of defining the Amazon API Gateway APIs, AWS Lambda functions, and Amazon DynamoDB tables needed by your serverless application.
+                    *'samlocaldemo' refers to `template.yaml`*
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## What about a second example?
+                    </textarea>                    
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## Second Example
+                    > S3 + Lambda + Api + Lambda
 
-            </textarea>
-        </section>  
-         <section data-markdown>
-            <textarea data-template>
-                ## Why do I need it?
+                    Receives a file, parses it and post it to an API
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    1. Create template.yaml
+                    2. Create S3 Event
+                    3. Create Lambda
+                    4. Start API Gateway
+                    5. Test it
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    ### 1. Create template.yaml
 
-                You don't really need it, but could be useful.
+                    ```
+                    AWSTemplateFormatVersion: '2010-09-09'
+                    Transform: 'AWS::Serverless-2016-10-31'
+                    Description: Basic Template.
+                    Resources:
+                      samlocaldemo:
+                        Type: 'AWS::Serverless::Function'
+                        Properties:
+                          Handler: index.handler
+                          Runtime: nodejs6.10
+                          CodeUri: .
+                          Description: 'A demo lambda'
+                          MemorySize: 128
+                          Timeout: 10
+                          Role: 'arn:aws:iam::293899812389:role/service-role/sam-local-demo'
+                          ...
+                          ...                  
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    ### 2. Create S3 Event
+                    ```
+                    sam local generate-event s3 --bucket "sam-local-demo.sandbox.zooplus.io" --key uploaded_file.txt > s3_test.json
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    ### 3. Create Lambda
+                    ```
+                    const https = require("https");
+                    const urlParser = require("url");
+                    const path = require("path");
 
-                Is it an alternative to `Serverless`, `Terraform`, `CloudFormation`?
+                    const API_URL = process.env.API_URL;
 
-                ## ?    
-            </textarea>
-        </section>        
-         <section data-markdown>
-            <textarea data-template>
-                ### SAM 
-                ##### vs 
-                #### Serverless - Terraform - CloudFormation
+                    const postToApi = (id, payload) => {
 
-                * Is an extension of Cloud Formation.
-                * Is meant for a limited set of resources and events.
-                * Was created by AWS to simplify the usage of Cloud Formation when developing serverless applications.
-            </textarea>
-        </section>
-        <section data-markdown>
-            <textarea data-template>
-                ## When to use it
+                        return new Promise((resolve, reject) => {
+                            
+                            let url = urlParser.parse(API_URL, true, true);
+                            let options = { 
+                                hostname: url.hostname,
+                                port: url.port,
+                                path: path.join(url.path, `${id}`),
+                                method: "PUT",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            };    
+                            let request = https.request(options, (response) => {
+                                response.setEncoding("utf-8");
+                                let body = "";
+                                
+                                response.on("data", (chunk) => {
+                                    body += chunk;
+                                });            
+                                
+                                response.on("end", () => {
+                                    let status = response.statusCode;
+                                    console.log(`Status: ${status}, Response: ${body}`);
+                                    if(status >= 400){
+                                        reject({status, body});
+                                    }
+                                    resolve({status, body});
+                                });
+                            });
+                            request.on("error", (error) => {
+                                reject(error);
+                            });
 
-                SAM should be used when developing serverless applications consisting of any of these resources:
+                            request.write(JSON.stringify(payload.event));
+                            request.end();
+                        });
+                    };
 
-                * Function (Lambda)
-                * Simple Table (Dynamodb with simple key)
-                * API (Api Gateway)
+                    const prepareResponse = (statusCode, body) => ({
+                        statusCode: statusCode,
+                        headers: {
+                            "Access-Control-Allow-Origin": "*"
+                        },
+                        body: JSON.stringify(body)
+                    });
 
-                *For something else, should be complemented with CloudFormation*
-            </textarea>
-        </section>
-         <section data-markdown>
-            <textarea data-template>
-                ## Documentation
-
-                [https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md)
-            </textarea>
-        </section>
-         <section data-markdown>
-            <textarea data-template>
-                ## What is SAM Local?
-            </textarea>
-        </section>
-         <section data-markdown>
-            <textarea data-template>
-                
-            </textarea>
-        </section>
-         <section data-markdown>
-            <textarea data-template>
-                
-            </textarea>
-        </section>          
-    </div>
-</div>
-
-<script src="lib/js/head.min.js"></script>
-<script src="js/reveal.min.js"></script>
-<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				dependencies: [
-               { src: 'plugin/markdown/marked.js' },
-               { src: 'plugin/markdown/markdown.js' },
-               { src: 'plugin/zoom-js/zoom.js', async: true },
-               { src: 'plugin/notes/notes.js', async: true },
-               { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
-               ]
-           });
-       </script>
-</body>
+                    exports.handler = (event, context, callback) => {    
+                        console.log("Received Event: ", event);
+                        postToApi(1234, {
+                            key: event.Records[0].s3.object.key,
+                            event: event.Records[0].eventName 
+                        })
+                            .then(response => {
+                                console.log("Response from API: ", response);
+                                callback(null, prepareResponse(response.statusCode, response.body));
+                            })
+                            .catch(error => {
+                                console.error("Error", error);
+                                callback(null, prepareResponse(500, error));
+                            });
+                    };         
+                    ```
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    ### 4. Start API Gateway
+                    `sam local start-api`
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    ### 5. Test it
+                    `sam local invoke -e s3_test.json`
+                    </textarea>
+                </section>
+                <section data-markdown>
+                    <textarea data-template>
+                    ## S3 + Lambda + Api + Lambda
+                    Shit! It did not work!
+                    </textarea>
+                </section>
+            </div>
+        </div>
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.min.js"></script>
+        <script>
+                    // More info about config & dependencies:
+                    // - https://github.com/hakimel/reveal.js#configuration
+                    // - https://github.com/hakimel/reveal.js#dependencies
+                    Reveal.initialize({
+                        dependencies: [
+        { src: 'plugin/markdown/marked.js' },
+        { src: 'plugin/markdown/markdown.js' },
+        { src: 'plugin/zoom-js/zoom.js', async: true },
+        { src: 'plugin/notes/notes.js', async: true },
+        { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ]
+        });
+        </script>
+    </body>
 </html>

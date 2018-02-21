@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Basic Template.
+Resources:
+  s3lambdademo:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: .
+      Description: 'A demo lambda'
+      MemorySize: 128
+      Timeout: 10
+      Role: 'arn:aws:iam::293899812389:role/service-role/sam-local-demo'
+      Environment:
+        Variables:
+          API_URL: http://172.16.15.164:3000/demo
+      Events:
+        BucketEvent1:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket1
+            Events:
+              - 's3:ObjectCreated:*'
+  Bucket1:
+    Type: 'AWS::S3::Bucket'
