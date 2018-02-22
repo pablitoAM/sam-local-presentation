@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Develop and Test AWS Lambdas Locally - Pablo Avila Mesa</title>
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/black.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+    <!-- Printing and PDF exports -->
+    <script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+    document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h1>Develop and Test Serverless Applications Locally</h1>
+                <p>Using SAM</p>
+                <small>Pablo Avila Mesa</small>
+            </section>
+            <section>
+                <h2>What is SAM</h2>
+                <blockquote>
+                    The AWS Serverless Application Model (AWS SAM, previously known as Project Flourish) extends AWS CloudFormation to provide a simplified way of defining the Amazon API Gateway APIs, AWS Lambda functions, and Amazon DynamoDB tables needed by your serverless application.
+                </blockquote>
+            </section>
+            <section>
+                <h2>Do I need it?</h2>
+                <p>Probably not, but maybe you'd like to see what is:</p>
+                <strong>SAM Local</strong>
+            </section>
+            <section>
+                <h2>SAM Local</h2>
+                <p>Is a CLI which allows doing the following:</p>
+                <ul>
+                    <li>Test Functions Locally</li>
+                    <li>Start local API Gateway from a SAM Template</li>
+                    <li>Validate a SAM Template</li>
+                    <li>Generate sample payloads for various event sources</li>
+                </ul>
+            </section>
+            <section>
+                <h2>How to use it?</h2>
+                <p>NodeJS: <code>npm install -g aws-sam-local</code></p>
+                <p>or</p>
+                <p>Binary release (download binary)</p>
+                <p>or</p>
+                <p>
+                    Build it from sources (Golang) :)
+                    <br>
+                    <code>go get github.com/awslabs/aws-sam-local</code>
+                </p>
+            </section>
+            <section>
+                <h2>What requires?</h2>
+                <em>Docker installed locally</em>
+            </section>
+            <section>
+                <h2>Documentation</h2>
+                <a href="https://github.com/awslabs/aws-sam-local" target="_blank">https://github.com/awslabs/aws-sam-local</a>
+            </section>
+            <section>
+                <h2>Let's see it in practice: Simple serverless application</h2>
+                <p><code>API Gateway + Lambda</code></p>
+            </section>
+            <section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <ol>
+                        <li>Create SAM template</li>
+                        <li>Start API Gateway</li>
+                        <li>Create Lambda</li>
+                        <li>Create Test Event</li>
+                        <li>Test it</li>
+                    </ol>
+                </section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <h3>1. Create SAM template</h3>
+                    <p><pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: API Lambda Demo.
+Resources:
+  apilambdademo:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: .
+      Description: 'A demo lambda'
+      MemorySize: 128
+      Timeout: 10
+      Role: 'arn:aws:iam::293899812389:role/service-role/sam-local-demo'
+      Events:
+        GetDemo:
+          Type: Api
+          Properties:
+            Path: /demo
+            Method: get
+        PostDemo:
+          Type: Api
+          Properties:
+            Path: /demo
+            Method: post
+        PutDemoId:
+          Type: Api
+          Properties:
+            Path: '/demo/{id}'
+            Method: put
+        GetDemoId:
+          Type: Api
+          Properties:
+            Path: '/demo/{id}'
+            Method: get</code></pre></p>
+                    <a href="../demo/api_lambda/template.yaml">Get the file</a>
+                </section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <h3>2. Start API Gateway</h3>
+                    <p><pre><code>sam local start-api -h #help</code></pre></p>
+                    <p><pre><code>sam local start-api</code></pre></p>
+                </section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <h3>3. Create Lambda</h3>
+                    <p><pre><code>exports.handler = (event, context, callback) => {
+    console.log("Received an event!");
+    console.log("Method: ", event.httpMethod);
+    console.log("Body: ", event.body);
+    console.log("Path Parameters: ", event.pathParameters);
+    let result = {
+        method: event.httpMethod,
+        body: event.body,
+        pathParameters: event.pathParameters
+    };
+    callback(null, {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify(result)
+    });
+};</code></pre></p>
+<a href="../demo/api_lambda/index.js">Get the file</a>
+                </section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <h3>4. Create Test Event</h3>
+                    <p><pre><code>sam local generate-event api -h</code></pre></p>
+                    <p><pre><code>sam local generate-event api -m "PUT" -r "/{id}" -p "/demo" -b "{ \\\"test\\\": \\\"body\\\" }" > test.json</code></pre></p>
+                </section>
+                <section>
+                    <h2>API Gateway + Lambda</h2>
+                    <h3>5. Test Lambda with Event</h3>
+                    <p><pre><code>sam local invoke -h</code></pre></p>
+                    <p><pre><code>sam local invoke apilambdademo -e test.json</code></pre></p>
+                    <small>'apilambdademo' is set in template.yaml</small>
+                </section>
+            </section>
+            <section>
+                <h2>What about a second example?</h2>
+            </section>
+            <section>
+                <h2>Second Example</h2>
+                <blockquote>S3 + Lambda + Api + Lambda</blockquote>
+                <small>Receives a file, parses and post it to an API</small>
+            </section>
+            <section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <ol>
+                        <li>Create SAM Template</li>
+                        <li>Create S3 Event</li>
+                        <li>Create Lambda</li>
+                        <li>Start API Gateway</li>
+                        <li>Test it</li>
+                    </ol>
+                </section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <h3>1. Create SAM Template</h3>
+                    <p><pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Basic Template.
+Resources:
+  s3lambdademo:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: .
+      Description: 'A demo lambda'
+      MemorySize: 128
+      Timeout: 10
+      Role: 'arn:aws:iam::293899812389:role/service-role/sam-local-demo'
+      Environment:
+        Variables:
+          API_URL: http://172.16.15.164:3000/demo
+      Events:
+        BucketEvent1:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket1
+            Events:
+              - 's3:ObjectCreated:*'
+  Bucket1:
+    Type: 'AWS::S3::Bucket'</code></pre></p>
+    <a href="../demo/s3_lambda/template.yaml">Get the file</a>
+                </section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <h3>2. Create S3 Event</h3>
+                    <p><pre><code>sam local generate-event s3 -h</code></pre></p>
+                    <p><pre><code>sam local generate-event s3 --bucket "sam-local-demo.sandbox.zooplus.io" --key uploaded_file.txt > s3_test.json</code></pre></p>
+                </section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <h3>3. Create Lambda</h3>
+                    <p><pre><code>const http = require("http");
+const urlParser = require("url");
+const path = require("path");
+
+const API_URL = process.env.API_URL;
+
+const postToApi = (id, payload) => {
+
+    return new Promise((resolve, reject) => {
+        
+        let url = urlParser.parse(API_URL, true, true);
+        let options = { 
+            hostname: url.hostname,
+            port: url.port,
+            path: path.join(url.path, `${id}`),
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };    
+        let request = http.request(options, (response) => {
+            response.setEncoding("utf-8");
+            let body = "";
+            
+            response.on("data", (chunk) => {
+                body += chunk;
+            });            
+            
+            response.on("end", () => {
+                let status = response.statusCode;
+                console.log(`Status: ${status}, Response: ${body}`);
+                if(status >= 400){
+                    reject({status, body});
+                }
+                resolve({status, body});
+            });
+        });
+        request.on("error", (error) => {
+            reject(error);
+        });
+
+        request.write(JSON.stringify(payload.event));
+        request.end();
+    });
+};
+
+const prepareResponse = (statusCode, body) => ({
+    statusCode: statusCode,
+    headers: {
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(body)
+});
+
+exports.handler = (event, context, callback) => {    
+    console.log("Received Event: ", event);
+    postToApi(1234, {
+        key: event.Records[0].s3.object.key,
+        event: event.Records[0].eventName 
+    })
+        .then(response => {
+            console.log("Response from API: ", response);
+            callback(null, prepareResponse(response.statusCode, response.body));
+        })
+        .catch(error => {
+            console.error("Error", error);
+            callback(null, prepareResponse(500, error));
+        });
+};</code></pre></p>
+                    <a href="../demo/api_lambda/index.js">Get the file</a>
+                </section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <h3>4. Start API Gateway</h3>
+                    <p><pre><code>sam local start-api --host 172.16.15.164</code></pre></p>
+                    <small>To make it accessible from within other lambdas, we need to specify the <code>host</code> parameter with a public ip. The best way, use our local ip. Use <code>ifconfig</code> or <code>ip a</code> to get it.</small>
+                </section>
+                <section>
+                    <h2>S3 + Lambda + Api + Lambda</h2>
+                    <h3>5. Test it</h3>
+                    <p><pre><code>sam local invoke s3lambdademo -e s3_test.json</code></pre></p>
+                    <small>Notice that our lambda will invoke <code>http://172.16.15.164:3000/demo</code> which is defined as an ENV var in our <code>template.yaml</code>.</small>
+                </section>
+            </section>
+            <section>
+                <h2>S3 + Lambda + Api + Lambda</h2>
+                <h3>Voila!</h3>
+                <p><pre><code>2018-02-22T10:12:56.059Z    fb34ee50-ab88-1df2-11d1-787ae1744d67    Response from API:  { status: 200, body: '{"method":"PUT","body":"\\"ObjectCreated:Put\\"","pathParameters":{"id":"1234"}}' }</code></pre></p>
+            </section>
+            <section>
+                <h2>And that's it</h2>
+                <p>I hope is useful for others</p>
+                <small>Please do not hesitate in contacting me for any doubts or any hand I could lend.</small>
+            </section>
+            <section>
+                <h1>Thanks</h1>
+                <h3>Pablo Avila Mesa</h3>
+            </section>
+        </div>
+    </div>
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+    <script>
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        dependencies: [
+            { src: 'plugin/markdown/marked.js' },
+            { src: 'plugin/markdown/markdown.js' },
+            { src: 'plugin/zoom-js/zoom.js', async: true },
+            { src: 'plugin/notes/notes.js', async: true },
+            { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ]
+    });
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-const https = require("https");
+const http = require("http");
 const urlParser = require("url");
 const path = require("path");
 
@@ -18,7 +18,7 @@ const postToApi = (id, payload) => {
                 "Content-Type": "application/json"
             }
         };    
-        let request = https.request(options, (response) => {
+        let request = http.request(options, (response) => {
             response.setEncoding("utf-8");
             let body = "";
             
